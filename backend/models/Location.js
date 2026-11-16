@@ -18,12 +18,18 @@ const locationSchema = new mongoose.Schema({
   title: { type: String, required: true },
   location: { type: String, required: true }, // e.g., "Cherrapunji"
   mainDescription: { type: String, required: true },
-  image: { type: String, required: true }, // Thumbnail URL for cards
+  
+  // Standard 2D photo for the gallery grid and destination hero banner
+  plainimage: { type: String, required: true }, 
+  
+  // Optional card thumbnail if needed, or you can use plainimage for both
+  image: { type: String }, 
+
   mapCoordinates: {
     lat: { type: Number, required: true },
     lng: { type: Number, required: true }
   },
-  views: [viewSchema] // Using the defined viewSchema to include hotspots!
+  views: [viewSchema] // Embedded 360° views and hotspots
 }, {
   timestamps: true
 });

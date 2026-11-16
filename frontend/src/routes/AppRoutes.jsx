@@ -7,12 +7,11 @@ import Destinations from "../pages/Destinations";
 import DestinationDetails from "../pages/DestinationDetails";
 import VirtualTours from "../pages/VirtualTours";
 import Gallery from "../pages/Gallery";
-
+import LocationDetail from "../pages/LocationDetail";
 // Authentication pages
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import ForgotPassword from "../pages/ForgotPassword";
-
 // Protected User / Admin pages
 import Profile from "../pages/Profile";
 import AdminDashboard from "../pages/AdminDashboard";
@@ -32,6 +31,7 @@ const AppRoutes = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
+      <Route path="/locations/:id" element={<LocationDetail/>} />
     </Routes>
   );
 };

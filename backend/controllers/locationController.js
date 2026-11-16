@@ -1,5 +1,6 @@
 import Location from '../models/Location.js';
 import { initialLocations } from '../data/seedData.js';
+import { uploadToCloudinary } from '../middleware/upload.js'; // Make sure this path points to your upload helper
 
 export const seedLocations = async (req, res) => {
   try {
@@ -35,10 +36,27 @@ export const getLocationById = async (req, res) => {
 export const createLocation = async (req, res) => {
   try {
     const { title, mainDescription, mapCoordinates, views } = req.body;
-    const newLocation = new Location({ title, mainDescription, mapCoordinates, views });
+
+    let imageUrl = "";
+
+    // If a file was uploaded with the request, send it to Cloudinary
+    if (req.file) {
+      const cloudinaryResult = await uploadToCloudinary(req.file.buffer);
+      imageUrl = cloudinaryResult.secure_url;
+    }
+
+    const newLocation = new Location({ 
+      title, 
+      mainDescription, 
+      mapCoordinates, 
+      views,
+      image: imageUrl // Assigns the Cloudinary secure URL if uploaded
+    });
+
     const savedLocation = await newLocation.save();
     res.status(201).json(savedLocation);
   } catch (err) {
+    console.error("Create location error:", err);
     res.status(400).json({ error: err.message });
   }
 };

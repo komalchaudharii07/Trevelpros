@@ -6,6 +6,7 @@ import {
   createLocation 
 } from '../controllers/locationController.js';
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
+import { upload } from '../middleware/upload.js'; // Import your multer upload middleware
 
 const router = express.Router();
 
@@ -13,13 +14,12 @@ const router = express.Router();
 router.get('/', getLocations);
 
 // STATIC routes like '/seed' MUST come BEFORE dynamic parameters like '/:id'
-// Otherwise, Express will treat the word "seed" as an ID and fail to find it.
 router.get('/seed', protect, adminOnly, seedLocations);
 
 // Public route for specific location by ID
 router.get('/:id', getLocationById);
 
-// Protected & Admin-only routes
-router.post('/', protect, adminOnly, createLocation);
+// Protected & Admin-only route with Cloudinary image upload middleware
+router.post('/', protect, adminOnly, upload.single('image'), createLocation);
 
 export default router;

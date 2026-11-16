@@ -1,4 +1,3 @@
-
 import {
   ArrowRight,
   Compass,
@@ -106,11 +105,12 @@ const VirtualTours = () => {
 
   const handleCloseTour = () => {
     setSelectedTour(null);
-    navigate("/virtual-tours");
+    navigate("/explore");
   };
 
   const getPreviewImage = (tour) => {
     return (
+      tour.plainimage ||
       tour.image ||
       tour.photo ||
       tour.views?.[0]?.thumbnail ||
@@ -157,7 +157,6 @@ const VirtualTours = () => {
 
         {tours.length === 0 ? (
           <div className="rounded-2xl border border-gray-200 bg-white p-10 text-center">
-            <Map className="mx-auto mb-4 text-gray-400" size={40} />
             <h2 className="text-xl font-semibold">
               No virtual tours available
             </h2>
@@ -199,7 +198,6 @@ const VirtualTours = () => {
                         />
                       ) : (
                         <div className="flex h-full items-center justify-center text-gray-500">
-                          <Map size={42} />
                         </div>
                       )}
 
@@ -207,7 +205,7 @@ const VirtualTours = () => {
 
                       <div className="absolute bottom-5 left-5 right-5 text-white">
                         <h3 className="text-2xl font-bold">
-                          {tour.name || "Unnamed Location"}
+                          {tour.title || tour.name || tour.locationName || "Unnamed Location"}
                         </h3>
 
                         <p className="mt-1 text-sm text-white/80">
@@ -243,7 +241,7 @@ const VirtualTours = () => {
           <div className="flex items-center justify-between bg-[#101915] px-5 py-4 text-white">
             <div>
               <h2 className="text-lg font-semibold">
-                {selectedTour.name}
+                {selectedTour.title || selectedTour.name || selectedTour.locationName || "Unnamed Location"}
               </h2>
               <p className="text-xs text-gray-400">
                 360° Virtual Experience
@@ -259,16 +257,18 @@ const VirtualTours = () => {
             </button>
           </div>
 
-          <div className="min-h-0 flex-1">
-            <PanoramaViewer
-              image={
-                selectedTour.views?.[0]?.imageUrl ||
-                selectedTour.views?.[0]?.image ||
-                selectedTour.image ||
-                ""
-              }
-            />
-          </div>
+         {/* Inside VirtualTours.jsx modal section */}
+<div className="h-[calc(100vh-73px)] w-full flex-1">
+  <PanoramaViewer
+    image={
+      selectedTour.views?.[0]?.iframeUrl ||
+      selectedTour.views?.[0]?.imageUrl ||
+      selectedTour.views?.[0]?.image ||
+      selectedTour.image ||
+      ""
+    }
+  />
+</div>
         </div>
       )}
     </div>

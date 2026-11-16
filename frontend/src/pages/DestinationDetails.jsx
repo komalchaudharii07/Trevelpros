@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 
 import {
@@ -29,9 +28,10 @@ import {
   getWikipediaDetails,
 } from "../utils/wikimedia";
 
+import { getVerifiedImage } from "../utils/imageOverrides"; // <--- 1. Import your override helper
+
 // =====================================================
 // STATIC DESTINATIONS
-// Image URLs are fetched dynamically from Wikimedia API.
 // =====================================================
 
 const destinations = {
@@ -255,21 +255,37 @@ const DestinationDetails = () => {
         ? activeDestination.address || ""
         : `${activeDestination.region}, Meghalaya, India`;
 
-      const [images, wiki] = await Promise.all([
-        getCommonsImages({
+      // 2. 3-Tier Image Resolution Strategy for Search/Static pages
+      let resolvedImages = [];
+      
+      // Priority 1: Direct plainimage passed via router state or object
+      const directImage = activeDestination.plainimage;
+      if (directImage) {
+        resolvedImages = [{ image: directImage, source: "Database / Direct URL" }];
+      } else {
+        // Priority 2: Check hand-verified overrides helper
+        const verifiedUrl = getVerifiedImage(name);
+        if (verifiedUrl) {
+          resolvedImages = [{ image: verifiedUrl, source: "Verified Manual Override" }];
+        }
+      }
+
+      // Priority 3: Fallback to Commons API if no direct/verified image exists
+      if (resolvedImages.length === 0) {
+        resolvedImages = await getCommonsImages({
           name,
           address,
           lat,
           lng,
-        }),
+        });
+      }
 
-        isSearchDestination
-          ? getWikipediaDetails(name)
-          : Promise.resolve(null),
-      ]);
+      const wiki = isSearchDestination
+        ? await getWikipediaDetails(name)
+        : null;
 
       if (!cancelled) {
-        setDynamicImages(images);
+        setDynamicImages(resolvedImages);
         setWikiDetails(wiki);
         setLoadingDetails(false);
       }
@@ -285,6 +301,7 @@ const DestinationDetails = () => {
     isSearchDestination,
     searchedDestination?.name,
     searchedDestination?.address,
+    searchedDestination?.plainimage,
     searchedDestination?.location?.lat,
     searchedDestination?.location?.lng,
     destination?.name,
@@ -329,6 +346,7 @@ const DestinationDetails = () => {
     const {
       name,
       address,
+      plainimage,
       location: coordinates,
     } = searchedDestination;
 
@@ -385,7 +403,7 @@ const DestinationDetails = () => {
 
         <section className="relative min-h-[450px] overflow-hidden md:h-[550px]">
           <DestinationImage
-            images={dynamicImages}
+            images={plainimage ? [{ image: plainimage }] : dynamicImages}
             alt={name}
             className="absolute inset-0 h-full w-full object-cover"
           />
@@ -938,7 +956,7 @@ const DestinationDetails = () => {
 
       <section className="relative h-[65vh] min-h-[460px] overflow-hidden">
         <DestinationImage
-          images={dynamicImages}
+          images={destination.plainimage ? [{ image: destination.plainimage }] : dynamicImages}
           alt={destination.name}
           className="absolute inset-0 h-full w-full object-cover"
         />
@@ -1002,153 +1020,11 @@ const DestinationDetails = () => {
             </p>
 
             <h2 className="text-3xl font-semibold leading-tight text-white md:text-5xl">
-              Experience
-              <br />
-              <span className="text-emerald-400">
-                {destination.name}.
-              </span>
+              Experience {destination.name}.
             </h2>
-          </div>
-
-          <div className="md:col-span-5">
-            <p className="text-sm leading-7 text-gray-400">
+            <p className="mt-4 text-sm leading-7 text-gray-300">
               {destination.description}
             </p>
-
-            <div className="mt-6 flex items-center gap-3 text-sm text-gray-400">
-              <MapPin
-                size={17}
-                className="text-emerald-400"
-              />
-              <span>
-                {destination.region}, Meghalaya
-              </span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* EXPERIENCES */}
-
-      <section className="border-y border-white/10 bg-[#0c1913] px-6 py-14 md:px-10 md:py-16">
-        <div className="mx-auto max-w-7xl">
-          <SectionHeading
-            label="What to experience"
-            title="Make the journey worth remembering."
-          />
-
-          <div className="mt-8 divide-y divide-white/10 border-y border-white/10">
-            {destination.experiences.map((experience, index) => (
-              <div
-                key={experience}
-                className="group grid gap-3 py-5 md:grid-cols-12 md:items-center"
-              >
-                <div className="text-xs font-medium text-gray-500 md:col-span-1">
-                  0{index + 1}
-                </div>
-
-                <div className="md:col-span-9">
-                  <h3 className="text-base font-medium text-gray-200 transition group-hover:text-emerald-400 md:text-lg">
-                    {experience}
-                  </h3>
-                </div>
-
-                <div className="flex md:col-span-2 md:justify-end">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-gray-400 transition group-hover:border-emerald-500 group-hover:bg-emerald-500 group-hover:text-[#07110d]">
-                    <ArrowRight size={15} />
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 360 EXPERIENCE */}
-
-      <section className="px-6 py-14 md:px-10 md:py-16">
-        <div className="mx-auto max-w-7xl">
-          <div className="relative overflow-hidden rounded-xl border border-white/10">
-            <div className="relative h-[300px] md:h-[380px]">
-              <DestinationImage
-                images={dynamicImages}
-                alt={`${destination.name} preview`}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/10" />
-
-              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-9">
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-300">
-                  Immersive experience
-                </p>
-
-                <h2 className="mt-3 text-2xl font-semibold text-white md:text-4xl">
-                  Step inside {destination.name}.
-                </h2>
-
-                <Link
-                  to="/virtual-tours"
-                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-emerald-500 px-5 py-3 text-sm font-semibold text-[#07110d] transition hover:bg-emerald-400"
-                >
-                  <Play size={14} fill="currentColor" />
-                  Enter 360° experience
-                  <ArrowRight size={14} />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* MAP CTA */}
-
-      <section className="px-6 pb-14 md:px-10 md:pb-16">
-        <div className="mx-auto max-w-7xl rounded-xl border border-white/10 bg-[#0c1913] p-6 md:p-8">
-          <div className="grid gap-6 md:grid-cols-12 md:items-center">
-            <div className="md:col-span-8">
-              <div className="flex items-center gap-2 text-emerald-400">
-                <MapPin size={17} />
-
-                <span className="text-xs font-semibold uppercase tracking-[0.25em]">
-                  Explore on map
-                </span>
-              </div>
-
-              <h2 className="mt-4 text-2xl font-semibold text-white md:text-3xl">
-                Find your way to {destination.name}.
-              </h2>
-            </div>
-
-            <div className="md:col-span-4 md:flex md:justify-end">
-              <Link
-                to="/explore"
-                className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-5 py-3 text-sm font-semibold text-[#07110d] transition hover:bg-emerald-400"
-              >
-                <Compass size={16} />
-                Open Explore Map
-                <ArrowRight size={15} />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FOOTER */}
-
-      <section className="border-t border-white/10 bg-[#0c1913] px-6 py-8 md:px-10">
-        <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <Link
-            to="/destinations"
-            className="flex items-center gap-2 text-sm font-medium text-gray-400 transition hover:text-emerald-400"
-          >
-            <ArrowLeft size={16} />
-            Back to all destinations
-          </Link>
-
-          <div className="hidden items-center gap-2 text-xs uppercase tracking-[0.2em] text-gray-500 md:flex">
-            <Star size={13} />
-            Meghalaya
           </div>
         </div>
       </section>

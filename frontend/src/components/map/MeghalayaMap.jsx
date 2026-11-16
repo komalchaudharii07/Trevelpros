@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -233,7 +232,7 @@ const MeghalayaMap = () => {
           name: selectedPlace.name,
           address: selectedPlace.address,
           location: selectedPlace.location,
-          photo: selectedPlace.photo,
+          plainimage: selectedPlace.photo, // Pass plainimage property for consistency
           isDatabaseTour: selectedPlace.isDatabaseTour,
           description: selectedPlace.description || "",
         },
@@ -364,6 +363,9 @@ const MeghalayaMap = () => {
             Number(lng),
           ];
 
+          // Resolve image from plainimage or image fields in database
+          const resolvedImage = loc.plainimage || loc.image;
+
           return (
             <Marker
               key={tourId}
@@ -383,22 +385,20 @@ const MeghalayaMap = () => {
                       loc.address ||
                       "Meghalaya, India",
 
-                    // Only accept a real image URL.
-                    // Never use iframeUrl as a photograph.
                     photo:
-                      typeof loc.image === "string" &&
-                        /^https?:\/\//i.test(loc.image)
-                        ? loc.image
+                      typeof resolvedImage === "string" &&
+                      /^https?:\/\//i.test(resolvedImage)
+                        ? resolvedImage
                         : null,
 
-                    description: loc.description || "",
+                    description: loc.mainDescription || loc.description || "",
 
                     location: {
                       lat: Number(lat),
                       lng: Number(lng),
                     },
 
-                    isDatabaseTour: true,
+                    isDatabaseTour: Array.isArray(loc.views) && loc.views.length > 0,
                     isCurrentLocation: false,
                   });
 
